@@ -1,0 +1,247 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import type { PublicState } from "@/lib/types";
+import { hoursMinutes, parseISO, toISODate } from "@/lib/dates";
+import CalendarGrid from "@/components/CalendarGrid";
+import Clock from "./Clock";
+import NotePanel from "./NotePanel";
+import PopupBanner from "./PopupBanner";
+import ProgressBar from "./ProgressBar";
+
+const POLL_INTERVAL_MS = 3000;
+
+const EMPTY_STATE: PublicState = {
+  workingDays: [],
+  note: { content: "", updatedAt: null },
+  settings: { popupEnabled: false, popupMessage: "" },
+  workHours: { start: 9, end: 19 },
+};
+
+async function saveNote(content: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/note", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+function pad(n: number, len = 2): string {
+  return String(n).padStart(len, "0");
+}
+
+interface Countdown {
+  d: string;
+  h: string;
+  m: string;
+  s: string;
+}
+
+function countdownToEnd(workingDays: string[], workEnd: number, now: Date): Countdown {
+  const last = workingDays[workingDays.length - 1];
+  if (!last) return { d: "00", h: "00", m: "00", s: "00" };
+  const end = parseISO(last);
+  end.setHours(Math.min(23, workEnd), 0, 0, 0);
+  const total = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return { d: pad(d), h: pad(h), m: pad(m), s: pad(s) };
+}
+
+function dayPercent(now: Date, start: number, end: number): number {
+  const minutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+  const total = Math.max(1, end - start) * 60;
+  return Math.min(1, Math.max(0, (minutes - start * 60) / total));
+}
+
+export default function HomeClient() {
+  const [now, setNow] = useState(() => new Date());
+  const [state, setState] = useState<PublicState>(EMPTY_STATE);
+  const [loading, setLoading] = useState(true);
+  const [offline, setOffline] = useState(false);
+  const [month, setMonth] = useState(() => new Date());
+  const [dismissedKey, setDismissedKey] = useState("");
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let inFlight = false;
+
+    const poll = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const res = await fetch("/api/state", { cache: "no-store" });
+        if (res.ok) {
+          const data = (await res.json()) as PublicState;
+          if (!cancelled) {
+            setState(data);
+            setOffline(false);
+          }
+        } else if (!cancelled) {
+          setOffline(true);
+        }
+      } catch {
+        if (!cancelled) setOffline(true);
+      } finally {
+        inFlight = false;
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    poll();
+    const timer = window.setInterval(poll, POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  const today = toISODate(now);
+  const selected = useMemo(() => new Set(state.workingDays), [state.workingDays]);
+
+  const stats = useMemo(() => {
+    let passed = 0;
+    let remaining = 0;
+    for (const day of state.workingDays) {
+      if (day < today) passed++;
+      else if (day !== today) remaining++;
+    }
+    const total = state.workingDays.length;
+    return {
+      total,
+      passed,
+      remaining,
+      percent: total > 0 ? Math.round((passed / total) * 100) : 0,
+    };
+  }, [state.workingDays, today]);
+
+  const countdown = useMemo(
+    () => countdownToEnd(state.workingDays, state.workHours.end, now),
+    [state.workingDays, state.workHours.end, now]
+  );
+
+  const todayProgress = dayPercent(now, state.workHours.start, state.workHours.end);
+  const todayPercent = Math.round(todayProgress * 100);
+
+  const popupActive =
+    state.settings.popupEnabled && state.settings.popupMessage.trim().length > 0;
+  const popupKey = `${state.settings.popupEnabled}|${state.settings.popupMessage}`;
+  const showPopup = popupActive && dismissedKey !== popupKey;
+
+  const segments = [
+    { value: countdown.d, unit: "Jours" },
+    { value: countdown.h, unit: "Heures" },
+    { value: countdown.m, unit: "Min" },
+    { value: countdown.s, unit: "Sec" },
+  ];
+
+  return (
+    <main className="flex h-[100dvh] flex-col gap-3 p-3 sm:gap-4 sm:p-5">
+      {offline && (
+        <div className="shrink-0 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-center text-xs text-red-300">
+          Connexion au serveur perdue — les données peuvent être périmées.
+        </div>
+      )}
+
+      <section className="grid shrink-0 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
+        <ProgressBar
+          label="Avancement global"
+          sub={`${stats.passed}/${stats.total} · ${stats.percent}%`}
+          percent={stats.percent}
+          barClassName="bg-gradient-to-r from-violet-500 to-sky-400"
+          className="lg:col-span-2"
+        />
+        <ProgressBar
+          label="Progression du jour J"
+          sub={`${hoursMinutes(now)} / ${pad(state.workHours.end)}:00 · ${todayPercent}%`}
+          percent={todayPercent}
+          barClassName="bg-gradient-to-r from-sky-500 via-sky-400 to-amber-300"
+          className="lg:col-span-1"
+        />
+      </section>
+
+      <section className="grid min-h-0 flex-1 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
+        <div className="flex min-h-0 flex-col gap-3 sm:gap-4 lg:col-span-2">
+          <div className="panel flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-4 text-center sm:p-6">
+          <div className="text-xs font-semibold tracking-widest text-slate-400 uppercase sm:text-sm">
+            {loading ? "Chargement…" : "Temps de travail restants"}
+          </div>
+          <div className="flex items-start justify-center gap-2 font-mono font-bold text-white tabular-nums sm:gap-3">
+            {segments.map((seg, i) => (
+              <div key={seg.unit} className="flex items-start gap-2 sm:gap-3">
+                {i > 0 && (
+                  <span className="pt-2 text-4xl font-normal text-sky-500/60 sm:text-7xl lg:text-8xl">
+                    :
+                  </span>
+                )}
+                <div className="flex flex-col items-center">
+                  <span className="bg-gradient-to-b from-white to-sky-400 bg-clip-text text-5xl font-bold leading-none text-transparent sm:text-8xl lg:text-9xl">
+                    {loading ? "—" : seg.value}
+                  </span>
+                  <span className="mt-1.5 text-[9px] font-sans font-medium tracking-widest text-slate-500 uppercase sm:text-[11px]">
+                    {seg.unit}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="grid w-full max-w-xl grid-cols-3 gap-2">
+            {[
+              { label: "Total", value: stats.total, cls: "text-slate-300" },
+              { label: "Passés", value: stats.passed, cls: "text-slate-400" },
+              { label: "Restants", value: stats.remaining, cls: "text-sky-300" },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="rounded-xl bg-white/[0.04] px-2 py-2.5 text-center ring-1 ring-white/5"
+              >
+                <div className={`font-mono text-2xl font-semibold tabular-nums sm:text-3xl ${s.cls}`}>
+                  {s.value}
+                </div>
+                <div className="mt-0.5 text-[9px] tracking-widest text-slate-500 uppercase sm:text-[10px]">
+                  {s.label}
+                </div>
+              </div>
+            ))}
+          </div>
+          </div>
+
+          <div className="panel shrink-0 px-4 py-3 text-center">
+            <Clock now={now} />
+          </div>
+        </div>
+
+        <div className="panel min-h-0 flex-col p-4 sm:p-5 lg:col-span-1">
+          <CalendarGrid
+            month={month}
+            selected={selected}
+            today={today}
+            onMonthChange={setMonth}
+          />
+        </div>
+      </section>
+
+      <footer className="h-36 shrink-0">
+        <NotePanel serverContent={state.note.content} saveContent={saveNote} />
+      </footer>
+
+      <PopupBanner
+        message={state.settings.popupMessage}
+        enabled={showPopup}
+        onClose={() => setDismissedKey(popupKey)}
+      />
+    </main>
+  );
+}
