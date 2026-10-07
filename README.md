@@ -1,4 +1,4 @@
-# MS-END — Compte à rebours de jours de travail
+# MS-END | Compte à rebours de jours de travail
 
 Webapp Next.js (App Router) affichant en plein écran, sans scroll, le temps de travail
 restant (`JJ:HH:MM:SS`), la progression globale et du jour J, un calendrier des jours
@@ -12,12 +12,12 @@ sélectionnés, un bloc notes partagé en direct et un pop-up d'information.
 ### Page principale
 - **Carte « Avancement global »** en haut à gauche (2 colonnes) : pourcentage `XX.XXXX%`
   en direct + barre de progression.
-- **Grand décompte « Temps de travail restants »** en `JJ:HH:MM:SS` en direct (jusqu'à la
+- **Grand décompte « Fin dans »** en `JJ:HH:MM:SS` en direct (jusqu'à la
   fin du dernier jour de travail sélectionné, heure de sortie configurable), en grande
   carte (2 colonnes) sous l'avancement global : le titre est aligné sur la même ligne
   que **l'horloge temps réel + date du jour** (plus de panneau d'horloge séparé en
   dessous), chiffres géants + tuiles **Total / Passés / Restants**.
-- **Barre « Progression du jour J »** en haut à droite (1 colonne, carte plus haute) :
+- **Barre « Progression du jour»** en haut à droite (1 colonne, carte plus haute) :
   heure courante dans la fenêtre de travail + pourcentage `XX.XXXX%` affiché en grand.
 
   Les deux pourcentages sont affichés en `XX.XXXX%` (4 décimales) et évoluent en temps

@@ -48,7 +48,7 @@ export default function NotePanel({ serverContent, saveContent }: NotePanelProps
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-white/10 px-4 py-2">
         <span className="live-dot inline-block h-2 w-2 rounded-full bg-emerald-400" />
         <span className="text-xs font-semibold tracking-wider text-slate-200 uppercase">
-          Bloc notes — en direct
+          Bloc notes Live
         </span>
         <span className="ml-auto text-[11px] text-slate-500">
           {status === "saving" && "Enregistrement…"}

@@ -156,64 +156,63 @@ export default function HomeClient() {
     <main className="flex min-h-[100dvh] flex-col gap-3 p-3 sm:gap-4 sm:p-5 lg:h-[100dvh]">
       {offline && (
         <div className="shrink-0 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-center text-xs text-red-300">
-          Connexion au serveur perdue — les données peuvent être périmées.
+          Connexion au serveur perdue
         </div>
       )}
 
       <section className="grid shrink-0 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
         <div className="panel flex min-w-0 flex-col justify-center gap-2 p-4 sm:p-5 lg:col-span-2">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
-              Avancement global
-            </span>
-            <span className="font-mono text-lg font-bold tabular-nums text-white sm:text-2xl">
-              {globalPercentLabel}
-            </span>
-          </div>
-          <div className="h-5 overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-white/5 sm:h-6">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-sky-400 transition-[width] duration-700 ease-out"
-              style={{ width: `${Math.min(100, Math.max(0, stats.percent)).toFixed(4)}%` }}
-            />
+          <span className="text-center text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
+            {loading ? "Chargement…" : "Fin dans"}
+          </span>
+          <div className="flex items-start justify-center gap-2 font-mono font-bold text-white tabular-nums sm:gap-3">
+            {segments.map((seg, i) => (
+              <div key={seg.unit} className="flex items-start gap-2 sm:gap-3">
+                {i > 0 && (
+                  <span className="text-[clamp(1.5rem,3.2vw,5.5rem)] font-normal leading-none text-sky-500/60">
+                    :
+                  </span>
+                )}
+                <div className="flex flex-col items-center">
+                  <span className="bg-gradient-to-b from-white to-sky-400 bg-clip-text text-[clamp(2rem,13vw,2.5rem)] font-bold leading-none text-transparent sm:text-[clamp(2.25rem,5.2vw,9rem)]">
+                    {loading ? "| " : seg.value}
+                  </span>
+                  <span className="mt-1.5 text-[9px] font-sans font-medium tracking-widest text-slate-500 uppercase sm:text-[11px]">
+                    {seg.unit}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <ProgressBar
-          label="Progression du jour J"
-          sub={`${hoursMinutes(now)} / ${pad(state.workHours.end)}:00`}
-          percentLabel={todayPercentLabel}
-          percent={todayProgress * 100}
-          barClassName="bg-gradient-to-r from-sky-500 via-sky-400 to-amber-300"
-          className="lg:col-span-1"
-        />
+        <div className="flex min-w-0 flex-col gap-3 sm:gap-4 lg:col-span-1">
+          <ProgressBar
+            label="Progression du jour"
+            sub={`${hoursMinutes(now)} / ${pad(state.workHours.end)}:00`}
+            percentLabel={todayPercentLabel}
+            percent={todayProgress * 100}
+            barClassName="bg-gradient-to-r from-sky-500 via-sky-400 to-amber-300"
+          />
+          <div className="panel flex min-w-0 flex-1 items-center justify-center p-4 text-center">
+            <Clock now={now} />
+          </div>
+        </div>
       </section>
 
       <section className="grid min-h-0 flex-1 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
         <div className="flex min-h-0 flex-col gap-3 sm:gap-4 lg:col-span-2">
           <div className="panel flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-4 text-center sm:p-6">
-            <div className="flex w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-              <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
-                {loading ? "Chargement…" : "Temps de travail restants"}
-              </span>
-              <Clock now={now} />
+            <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
+              Avancement global
+            </span>
+            <div className="bg-gradient-to-b from-white via-violet-200 to-sky-400 bg-clip-text font-mono text-5xl font-bold leading-none tabular-nums text-transparent sm:text-7xl lg:text-8xl">
+              {globalPercentLabel}
             </div>
-            <div className="flex items-start justify-center gap-2 font-mono font-bold text-white tabular-nums sm:gap-3">
-              {segments.map((seg, i) => (
-                <div key={seg.unit} className="flex items-start gap-2 sm:gap-3">
-                  {i > 0 && (
-                    <span className="text-[clamp(1.5rem,3.2vw,5.5rem)] font-normal leading-none text-sky-500/60">
-                      :
-                    </span>
-                  )}
-                  <div className="flex flex-col items-center">
-                    <span className="bg-gradient-to-b from-white to-sky-400 bg-clip-text text-[clamp(2rem,13vw,2.5rem)] font-bold leading-none text-transparent sm:text-[clamp(2.25rem,5.2vw,9rem)]">
-                      {loading ? "—" : seg.value}
-                    </span>
-                    <span className="mt-1.5 text-[9px] font-sans font-medium tracking-widest text-slate-500 uppercase sm:text-[11px]">
-                      {seg.unit}
-                    </span>
-                  </div>
-                </div>
-              ))}
+            <div className="h-5 w-full max-w-2xl overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-white/5 sm:h-6">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-sky-400 transition-[width] duration-700 ease-out"
+                style={{ width: `${Math.min(100, Math.max(0, stats.percent)).toFixed(4)}%` }}
+              />
             </div>
             <div className="grid w-full max-w-xl grid-cols-3 gap-2">
               {[
