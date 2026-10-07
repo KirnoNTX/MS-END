@@ -45,7 +45,7 @@ export default function NotePanel({ serverContent, saveContent }: NotePanelProps
 
   return (
     <div className="panel flex h-full flex-col overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-white/10 px-4 py-2">
         <span className="live-dot inline-block h-2 w-2 rounded-full bg-emerald-400" />
         <span className="text-xs font-semibold tracking-wider text-slate-200 uppercase">
           Bloc notes — en direct

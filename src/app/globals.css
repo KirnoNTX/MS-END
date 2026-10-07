@@ -21,6 +21,22 @@ body {
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
 }
 
+/* Desktop : la page reste figée sur une seule vue (inchangé).
+   Mobile / tablette : la page défile verticalement pour tout voir. */
+@media (max-width: 1023px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+  }
+
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 ::selection {
   background: rgba(56, 189, 248, 0.35);
   color: #f8fafc;

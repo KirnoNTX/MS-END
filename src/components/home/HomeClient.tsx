@@ -5,6 +5,7 @@ import type { PublicState } from "@/lib/types";
 import { dayProgress, hoursMinutes, parseISO, toISODate } from "@/lib/dates";
 import CalendarGrid from "@/components/CalendarGrid";
 import Clock from "./Clock";
+import Confetti from "./Confetti";
 import NotePanel from "./NotePanel";
 import PopupBanner from "./PopupBanner";
 import ProgressBar from "./ProgressBar";
@@ -40,11 +41,12 @@ interface Countdown {
   h: string;
   m: string;
   s: string;
+  finished: boolean;
 }
 
 function countdownToEnd(workingDays: string[], workEnd: number, now: Date): Countdown {
   const last = workingDays[workingDays.length - 1];
-  if (!last) return { d: "00", h: "00", m: "00", s: "00" };
+  if (!last) return { d: "00", h: "00", m: "00", s: "00", finished: false };
   const end = parseISO(last);
   end.setHours(Math.min(23, workEnd), 0, 0, 0);
   const total = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
@@ -52,7 +54,7 @@ function countdownToEnd(workingDays: string[], workEnd: number, now: Date): Coun
   const h = Math.floor((total % 86400) / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  return { d: pad(d), h: pad(h), m: pad(m), s: pad(s) };
+  return { d: pad(d), h: pad(h), m: pad(m), s: pad(s), finished: total === 0 };
 }
 
 function formatPercent(value: number): string {
@@ -151,7 +153,7 @@ export default function HomeClient() {
   ];
 
   return (
-    <main className="flex h-[100dvh] flex-col gap-3 p-3 sm:gap-4 sm:p-5">
+    <main className="flex min-h-[100dvh] flex-col gap-3 p-3 sm:gap-4 sm:p-5 lg:h-[100dvh]">
       {offline && (
         <div className="shrink-0 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-center text-xs text-red-300">
           Connexion au serveur perdue — les données peuvent être périmées.
@@ -160,32 +162,25 @@ export default function HomeClient() {
 
       <section className="grid shrink-0 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
         <div className="panel flex min-w-0 flex-col justify-center gap-2 p-4 sm:p-5 lg:col-span-2">
-          <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
-            {loading ? "Chargement…" : "Temps de travail restants"}
-          </span>
-          <div className="flex items-start justify-center gap-2 font-mono font-bold text-white tabular-nums sm:gap-3">
-            {segments.map((seg, i) => (
-              <div key={seg.unit} className="flex items-start gap-2 sm:gap-3">
-                {i > 0 && (
-                  <span className="text-xl font-normal text-sky-500/60 sm:text-2xl">
-                    :
-                  </span>
-                )}
-                <div className="flex flex-col items-center">
-                  <span className="bg-gradient-to-b from-white to-sky-400 bg-clip-text text-2xl font-bold leading-none text-transparent sm:text-3xl">
-                    {loading ? "—" : seg.value}
-                  </span>
-                  <span className="mt-1 text-[8px] font-sans font-medium tracking-widest text-slate-500 uppercase sm:text-[10px]">
-                    {seg.unit}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
+              Avancement global
+            </span>
+            <span className="font-mono text-lg font-bold tabular-nums text-white sm:text-2xl">
+              {globalPercentLabel}
+            </span>
+          </div>
+          <div className="h-5 overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-white/5 sm:h-6">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-sky-400 transition-[width] duration-700 ease-out"
+              style={{ width: `${Math.min(100, Math.max(0, stats.percent)).toFixed(4)}%` }}
+            />
           </div>
         </div>
         <ProgressBar
           label="Progression du jour J"
-          sub={`${hoursMinutes(now)} / ${pad(state.workHours.end)}:00 · ${todayPercentLabel}`}
+          sub={`${hoursMinutes(now)} / ${pad(state.workHours.end)}:00`}
+          percentLabel={todayPercentLabel}
           percent={todayProgress * 100}
           barClassName="bg-gradient-to-r from-sky-500 via-sky-400 to-amber-300"
           className="lg:col-span-1"
@@ -195,29 +190,32 @@ export default function HomeClient() {
       <section className="grid min-h-0 flex-1 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
         <div className="flex min-h-0 flex-col gap-3 sm:gap-4 lg:col-span-2">
           <div className="panel flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-4 text-center sm:p-6">
-            <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
-              Avancement global
-            </span>
-            <div className="bg-gradient-to-b from-white via-violet-200 to-sky-400 bg-clip-text font-mono text-5xl font-bold leading-none tabular-nums text-transparent sm:text-7xl lg:text-8xl">
-              {globalPercentLabel}
+            <div className="flex w-full flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
+                {loading ? "Chargement…" : "Temps de travail restants"}
+              </span>
+              <Clock now={now} />
             </div>
-            <div className="w-full max-w-2xl">
-              <div className="h-6 overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-white/5 sm:h-7">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-sky-400 transition-[width] duration-700 ease-out"
-                  style={{
-                    width: `${Math.min(100, Math.max(0, stats.percent)).toFixed(4)}%`,
-                  }}
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between font-mono text-xs tabular-nums text-slate-400 sm:text-sm">
-                <span>
-                  {stats.passed}/{stats.total} jours effectués
-                </span>
-                <span className="text-sky-300">{stats.remaining} restants</span>
-              </div>
+            <div className="flex items-start justify-center gap-2 font-mono font-bold text-white tabular-nums sm:gap-3">
+              {segments.map((seg, i) => (
+                <div key={seg.unit} className="flex items-start gap-2 sm:gap-3">
+                  {i > 0 && (
+                    <span className="text-[clamp(1.5rem,3.2vw,5.5rem)] font-normal leading-none text-sky-500/60">
+                      :
+                    </span>
+                  )}
+                  <div className="flex flex-col items-center">
+                    <span className="bg-gradient-to-b from-white to-sky-400 bg-clip-text text-[clamp(2rem,13vw,2.5rem)] font-bold leading-none text-transparent sm:text-[clamp(2.25rem,5.2vw,9rem)]">
+                      {loading ? "—" : seg.value}
+                    </span>
+                    <span className="mt-1.5 text-[9px] font-sans font-medium tracking-widest text-slate-500 uppercase sm:text-[11px]">
+                      {seg.unit}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="grid w-full max-w-2xl grid-cols-3 gap-2">
+            <div className="grid w-full max-w-xl grid-cols-3 gap-2">
               {[
                 { label: "Total", value: stats.total, cls: "text-slate-300" },
                 { label: "Passés", value: stats.passed, cls: "text-slate-400" },
@@ -237,13 +235,9 @@ export default function HomeClient() {
               ))}
             </div>
           </div>
-
-          <div className="panel shrink-0 px-4 py-3 text-center">
-            <Clock now={now} />
-          </div>
         </div>
 
-        <div className="panel min-h-0 flex-col p-4 sm:p-5 lg:col-span-1">
+        <div className="panel h-[400px] min-h-0 flex-col p-4 sm:p-5 lg:h-auto lg:col-span-1">
           <CalendarGrid
             month={month}
             selected={selected}
@@ -256,6 +250,8 @@ export default function HomeClient() {
       <footer className="h-36 shrink-0">
         <NotePanel serverContent={state.note.content} saveContent={saveNote} />
       </footer>
+
+      <Confetti enabled={countdown.finished} />
 
       <PopupBanner
         message={state.settings.popupMessage}

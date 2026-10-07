@@ -10,15 +10,15 @@ sélectionnés, un bloc notes partagé en direct et un pop-up d'information.
 ## Fonctionnalités
 
 ### Page principale
+- **Carte « Avancement global »** en haut à gauche (2 colonnes) : pourcentage `XX.XXXX%`
+  en direct + barre de progression.
 - **Grand décompte « Temps de travail restants »** en `JJ:HH:MM:SS` en direct (jusqu'à la
-  fin du dernier jour de travail sélectionné, heure de sortie configurable), en haut à
-  gauche sur 2 colonnes, dans une carte agrandie.
-- **Grande carte « Avancement global »** (2 colonnes, sous le décompte) : pourcentage en
-  `XX.XXXX%` affiché en très gros, barre de progression, ligne `X/Y jours effectués`,
-  plus les tuiles **Total / Passés / Restants**.
-- **Horloge temps réel + date du jour**, affichée sous la carte Avancement global.
-- **Barre « Progression du jour J »** en haut à droite (1 colonne) : heure courante dans
-  la fenêtre de travail.
+  fin du dernier jour de travail sélectionné, heure de sortie configurable), en grande
+  carte (2 colonnes) sous l'avancement global : le titre est aligné sur la même ligne
+  que **l'horloge temps réel + date du jour** (plus de panneau d'horloge séparé en
+  dessous), chiffres géants + tuiles **Total / Passés / Restants**.
+- **Barre « Progression du jour J »** en haut à droite (1 colonne, carte plus haute) :
+  heure courante dans la fenêtre de travail + pourcentage `XX.XXXX%` affiché en grand.
 
   Les deux pourcentages sont affichés en `XX.XXXX%` (4 décimales) et évoluent en temps
   réel, sans recharger la page.

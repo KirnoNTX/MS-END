@@ -84,9 +84,6 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
     <main className="flex h-[100dvh] items-center justify-center p-6">
       <form onSubmit={handleSubmit} className="panel w-full max-w-sm p-7">
         <div className="mb-1 text-lg font-semibold text-white">Espace admin</div>
-        <p className="mb-5 text-sm text-slate-400">
-          Entrez le mot de passe pour gérer le compte à rebours.
-        </p>
         <label className="mb-1.5 block text-xs tracking-widest text-slate-500 uppercase">
           Mot de passe
         </label>
@@ -217,16 +214,13 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-lg font-semibold text-white">Espace admin</div>
-            <div className="text-xs text-slate-500">
-              Cliquez sur les jours pour les sélectionner — pas de plage, chaque jour se choisit.
-            </div>
           </div>
           <div className="flex gap-2">
             <Link
               href="/"
               className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white"
             >
-              ← Voir le site
+              Retour au site
             </Link>
             <button
               type="button"
@@ -241,9 +235,9 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         <ToastBar toast={toast} />
 
         <section className="panel p-4 sm:p-5">
-          <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <PanelTitle>Calendrier des jours de travail</PanelTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-sky-500/10 px-2.5 py-1 text-xs text-sky-300 ring-1 ring-sky-400/30">
                 {workingDays.length} sélectionnés
               </span>
