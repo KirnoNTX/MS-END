@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import AdminApp from "@/components/admin/AdminApp";
 
 export const metadata: Metadata = {
-  title: "Admin — MS-END",
-  description: "Espace de gestion du compte à rebours.",
+  title: "Admin — Masterclass Clock",
+  description: "Espace de gestion de Masterclass Clock.",
   robots: { index: false, follow: false },
 };
 

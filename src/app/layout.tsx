@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MS-END — Compte à rebours",
+  title: "Masterclass Clock",
   description:
     "Jours de travail restants, calendrier, progression du jour et bloc notes en direct.",
 };

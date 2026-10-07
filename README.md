@@ -11,13 +11,17 @@ sélectionnés, un bloc notes partagé en direct et un pop-up d'information.
 
 ### Page principale
 - **Grand décompte « Temps de travail restants »** en `JJ:HH:MM:SS` en direct (jusqu'à la
-  fin du dernier jour de travail sélectionné, heure de sortie configurable) + tuiles
-  **Total / Passés / Restants**.
-- **Horloge temps réel + date du jour**, affichée sous la carte du décompte.
-- **Deux grandes barres de progression en haut**, alignées sur les colonnes du calendrier
-  (2 colonnes / 1 colonne) :
-  - *Avancement global* : jours effectués / jours sélectionnés (2 colonnes).
-  - *Progression du jour J* : heure courante dans la fenêtre de travail (1 colonne).
+  fin du dernier jour de travail sélectionné, heure de sortie configurable), en haut à
+  gauche sur 2 colonnes, dans une carte agrandie.
+- **Grande carte « Avancement global »** (2 colonnes, sous le décompte) : pourcentage en
+  `XX.XXXXX%` affiché en très gros, barre de progression, ligne `X/Y jours effectués`,
+  plus les tuiles **Total / Passés / Restants**.
+- **Horloge temps réel + date du jour**, affichée sous la carte Avancement global.
+- **Barre « Progression du jour J »** en haut à droite (1 colonne) : heure courante dans
+  la fenêtre de travail.
+
+  Les deux pourcentages sont affichés en `XX.XXXXX%` (5 décimales) et évoluent en temps
+  réel, sans recharger la page.
 - **Calendrier mensuel navigable** : les jours sélectionnés sont colorés selon leur position
   relative au jour J (aujourd'hui) :
   - **Bleu clair** pour les jours de travail **passés** (avant le jour J).

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { PublicState } from "@/lib/types";
-import { hoursMinutes, parseISO, toISODate } from "@/lib/dates";
+import { dayProgress, hoursMinutes, parseISO, toISODate } from "@/lib/dates";
 import CalendarGrid from "@/components/CalendarGrid";
 import Clock from "./Clock";
 import NotePanel from "./NotePanel";
@@ -55,10 +55,8 @@ function countdownToEnd(workingDays: string[], workEnd: number, now: Date): Coun
   return { d: pad(d), h: pad(h), m: pad(m), s: pad(s) };
 }
 
-function dayPercent(now: Date, start: number, end: number): number {
-  const minutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-  const total = Math.max(1, end - start) * 60;
-  return Math.min(1, Math.max(0, (minutes - start * 60) / total));
+function formatPercent(value: number): string {
+  return `${Math.min(100, Math.max(0, value)).toFixed(5)}%`;
 }
 
 export default function HomeClient() {
@@ -111,29 +109,34 @@ export default function HomeClient() {
   const today = toISODate(now);
   const selected = useMemo(() => new Set(state.workingDays), [state.workingDays]);
 
+  const todayProgress = dayProgress(now, state.workHours.start, state.workHours.end);
+
   const stats = useMemo(() => {
     let passed = 0;
     let remaining = 0;
+    let todayWorking = false;
     for (const day of state.workingDays) {
       if (day < today) passed++;
-      else if (day !== today) remaining++;
+      else if (day === today) todayWorking = true;
+      else remaining++;
     }
     const total = state.workingDays.length;
+    const done = passed + (todayWorking ? todayProgress : 0);
     return {
       total,
       passed,
       remaining,
-      percent: total > 0 ? Math.round((passed / total) * 100) : 0,
+      percent: total > 0 ? (done / total) * 100 : 0,
     };
-  }, [state.workingDays, today]);
+  }, [state.workingDays, today, todayProgress]);
 
   const countdown = useMemo(
     () => countdownToEnd(state.workingDays, state.workHours.end, now),
     [state.workingDays, state.workHours.end, now]
   );
 
-  const todayProgress = dayPercent(now, state.workHours.start, state.workHours.end);
-  const todayPercent = Math.round(todayProgress * 100);
+  const globalPercentLabel = formatPercent(stats.percent);
+  const todayPercentLabel = formatPercent(todayProgress * 100);
 
   const popupActive =
     state.settings.popupEnabled && state.settings.popupMessage.trim().length > 0;
@@ -156,17 +159,39 @@ export default function HomeClient() {
       )}
 
       <section className="grid shrink-0 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
-        <ProgressBar
-          label="Avancement global"
-          sub={`${stats.passed}/${stats.total} · ${stats.percent}%`}
-          percent={stats.percent}
-          barClassName="bg-gradient-to-r from-violet-500 to-sky-400"
-          className="lg:col-span-2"
-        />
+        <div className="panel flex min-w-0 flex-col justify-center gap-3 px-4 py-4 sm:px-6 sm:py-5 lg:col-span-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
+              {loading ? "Chargement…" : "Temps de travail restants"}
+            </span>
+            <span className="font-mono text-[10px] tabular-nums text-slate-500 sm:text-xs">
+              {loading ? "" : `Sortie à ${pad(state.workHours.end)}:00`}
+            </span>
+          </div>
+          <div className="flex items-start justify-center gap-2 font-mono font-bold text-white tabular-nums sm:gap-3">
+            {segments.map((seg, i) => (
+              <div key={seg.unit} className="flex items-start gap-2 sm:gap-3">
+                {i > 0 && (
+                  <span className="pt-1 text-[clamp(1rem,3vh,1.75rem)] font-normal text-sky-500/60">
+                    :
+                  </span>
+                )}
+                <div className="flex flex-col items-center">
+                  <span className="bg-gradient-to-b from-white to-sky-400 bg-clip-text text-[clamp(1.5rem,6vh,3.5rem)] font-bold leading-none text-transparent">
+                    {loading ? "—" : seg.value}
+                  </span>
+                  <span className="mt-1 text-[8px] font-sans font-medium tracking-widest text-slate-500 uppercase sm:text-[10px]">
+                    {seg.unit}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
         <ProgressBar
           label="Progression du jour J"
-          sub={`${hoursMinutes(now)} / ${pad(state.workHours.end)}:00 · ${todayPercent}%`}
-          percent={todayPercent}
+          sub={`${hoursMinutes(now)} / ${pad(state.workHours.end)}:00 · ${todayPercentLabel}`}
+          percent={todayProgress * 100}
           barClassName="bg-gradient-to-r from-sky-500 via-sky-400 to-amber-300"
           className="lg:col-span-1"
         />
@@ -174,48 +199,48 @@ export default function HomeClient() {
 
       <section className="grid min-h-0 flex-1 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
         <div className="flex min-h-0 flex-col gap-3 sm:gap-4 lg:col-span-2">
-          <div className="panel flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-4 text-center sm:p-6">
-          <div className="text-xs font-semibold tracking-widest text-slate-400 uppercase sm:text-sm">
-            {loading ? "Chargement…" : "Temps de travail restants"}
-          </div>
-          <div className="flex items-start justify-center gap-2 font-mono font-bold text-white tabular-nums sm:gap-3">
-            {segments.map((seg, i) => (
-              <div key={seg.unit} className="flex items-start gap-2 sm:gap-3">
-                {i > 0 && (
-                  <span className="pt-2 text-4xl font-normal text-sky-500/60 sm:text-7xl lg:text-8xl">
-                    :
-                  </span>
-                )}
-                <div className="flex flex-col items-center">
-                  <span className="bg-gradient-to-b from-white to-sky-400 bg-clip-text text-5xl font-bold leading-none text-transparent sm:text-8xl lg:text-9xl">
-                    {loading ? "—" : seg.value}
-                  </span>
-                  <span className="mt-1.5 text-[9px] font-sans font-medium tracking-widest text-slate-500 uppercase sm:text-[11px]">
-                    {seg.unit}
-                  </span>
-                </div>
+          <div className="panel flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-4 text-center sm:gap-5 sm:p-6">
+            <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
+              Avancement global
+            </span>
+            <div className="bg-gradient-to-b from-white via-violet-200 to-sky-400 bg-clip-text font-mono text-[clamp(2.25rem,10vh,6.5rem)] font-bold leading-none tabular-nums text-transparent">
+              {globalPercentLabel}
+            </div>
+            <div className="w-full max-w-2xl">
+              <div className="h-6 overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-white/5 sm:h-7">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-sky-400 transition-[width] duration-700 ease-out"
+                  style={{
+                    width: `${Math.min(100, Math.max(0, stats.percent)).toFixed(5)}%`,
+                  }}
+                />
               </div>
-            ))}
-          </div>
-          <div className="grid w-full max-w-xl grid-cols-3 gap-2">
-            {[
-              { label: "Total", value: stats.total, cls: "text-slate-300" },
-              { label: "Passés", value: stats.passed, cls: "text-slate-400" },
-              { label: "Restants", value: stats.remaining, cls: "text-sky-300" },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="rounded-xl bg-white/[0.04] px-2 py-2.5 text-center ring-1 ring-white/5"
-              >
-                <div className={`font-mono text-2xl font-semibold tabular-nums sm:text-3xl ${s.cls}`}>
-                  {s.value}
-                </div>
-                <div className="mt-0.5 text-[9px] tracking-widest text-slate-500 uppercase sm:text-[10px]">
-                  {s.label}
-                </div>
+              <div className="mt-2 flex items-center justify-between font-mono text-xs tabular-nums text-slate-400 sm:text-sm">
+                <span>
+                  {stats.passed}/{stats.total} jours effectués
+                </span>
+                <span className="text-sky-300">{stats.remaining} restants</span>
               </div>
-            ))}
-          </div>
+            </div>
+            <div className="grid w-full max-w-2xl grid-cols-3 gap-2">
+              {[
+                { label: "Total", value: stats.total, cls: "text-slate-300" },
+                { label: "Passés", value: stats.passed, cls: "text-slate-400" },
+                { label: "Restants", value: stats.remaining, cls: "text-sky-300" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-xl bg-white/[0.04] px-2 py-2.5 text-center ring-1 ring-white/5"
+                >
+                  <div className={`font-mono text-2xl font-semibold tabular-nums sm:text-3xl ${s.cls}`}>
+                    {s.value}
+                  </div>
+                  <div className="mt-0.5 text-[9px] tracking-widest text-slate-500 uppercase sm:text-[10px]">
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="panel shrink-0 px-4 py-3 text-center">
