@@ -56,7 +56,7 @@ function countdownToEnd(workingDays: string[], workEnd: number, now: Date): Coun
 }
 
 function formatPercent(value: number): string {
-  return `${Math.min(100, Math.max(0, value)).toFixed(5)}%`;
+  return `${Math.min(100, Math.max(0, value)).toFixed(4)}%`;
 }
 
 export default function HomeClient() {
@@ -159,25 +159,20 @@ export default function HomeClient() {
       )}
 
       <section className="grid shrink-0 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
-        <div className="panel flex min-w-0 flex-col justify-center gap-3 px-4 py-4 sm:px-6 sm:py-5 lg:col-span-2">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
-              {loading ? "Chargement…" : "Temps de travail restants"}
-            </span>
-            <span className="font-mono text-[10px] tabular-nums text-slate-500 sm:text-xs">
-              {loading ? "" : `Sortie à ${pad(state.workHours.end)}:00`}
-            </span>
-          </div>
+        <div className="panel flex min-w-0 flex-col justify-center gap-2 p-4 sm:p-5 lg:col-span-2">
+          <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
+            {loading ? "Chargement…" : "Temps de travail restants"}
+          </span>
           <div className="flex items-start justify-center gap-2 font-mono font-bold text-white tabular-nums sm:gap-3">
             {segments.map((seg, i) => (
               <div key={seg.unit} className="flex items-start gap-2 sm:gap-3">
                 {i > 0 && (
-                  <span className="pt-1 text-[clamp(1rem,3vh,1.75rem)] font-normal text-sky-500/60">
+                  <span className="text-xl font-normal text-sky-500/60 sm:text-2xl">
                     :
                   </span>
                 )}
                 <div className="flex flex-col items-center">
-                  <span className="bg-gradient-to-b from-white to-sky-400 bg-clip-text text-[clamp(1.5rem,6vh,3.5rem)] font-bold leading-none text-transparent">
+                  <span className="bg-gradient-to-b from-white to-sky-400 bg-clip-text text-2xl font-bold leading-none text-transparent sm:text-3xl">
                     {loading ? "—" : seg.value}
                   </span>
                   <span className="mt-1 text-[8px] font-sans font-medium tracking-widest text-slate-500 uppercase sm:text-[10px]">
@@ -199,11 +194,11 @@ export default function HomeClient() {
 
       <section className="grid min-h-0 flex-1 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
         <div className="flex min-h-0 flex-col gap-3 sm:gap-4 lg:col-span-2">
-          <div className="panel flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-4 text-center sm:gap-5 sm:p-6">
+          <div className="panel flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-4 text-center sm:p-6">
             <span className="text-xs font-bold tracking-widest text-slate-300 uppercase sm:text-sm">
               Avancement global
             </span>
-            <div className="bg-gradient-to-b from-white via-violet-200 to-sky-400 bg-clip-text font-mono text-[clamp(2.25rem,10vh,6.5rem)] font-bold leading-none tabular-nums text-transparent">
+            <div className="bg-gradient-to-b from-white via-violet-200 to-sky-400 bg-clip-text font-mono text-5xl font-bold leading-none tabular-nums text-transparent sm:text-7xl lg:text-8xl">
               {globalPercentLabel}
             </div>
             <div className="w-full max-w-2xl">
@@ -211,7 +206,7 @@ export default function HomeClient() {
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-violet-500 to-sky-400 transition-[width] duration-700 ease-out"
                   style={{
-                    width: `${Math.min(100, Math.max(0, stats.percent)).toFixed(5)}%`,
+                    width: `${Math.min(100, Math.max(0, stats.percent)).toFixed(4)}%`,
                   }}
                 />
               </div>

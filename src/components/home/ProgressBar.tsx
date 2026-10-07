@@ -28,7 +28,7 @@ export default function ProgressBar({
       <div className="h-5 overflow-hidden rounded-full bg-slate-800/80 ring-1 ring-white/5 sm:h-6">
         <div
           className={`h-full rounded-full transition-[width] duration-700 ease-out ${barClassName}`}
-          style={{ width: `${Math.min(100, Math.max(0, percent)).toFixed(5)}%` }}
+          style={{ width: `${Math.min(100, Math.max(0, percent)).toFixed(4)}%` }}
         />
       </div>
     </div>
